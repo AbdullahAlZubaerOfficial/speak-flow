@@ -74,6 +74,8 @@ type Chat = {
   phone?: string;
   email?: string;
   profileImage?: string;
+  // AI conversation history stored per chat
+  aiHistory?: { role: 'user' | 'assistant'; content: string }[];
 };
 
 // ─── Dummy Data ───────────────────────────────────────────────────────────────
@@ -98,6 +100,7 @@ const initialChats: Chat[] = [
     bio: 'Your smart AI assistant powered by advanced language models.',
     sharedImages: [],
     sharedFiles: [],
+    aiHistory: [],
   },
   {
     id: '2',
@@ -203,7 +206,7 @@ const EMOJI_REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥'];
 const generateWaveform = (bars = 30): number[] =>
   Array.from({ length: bars }, () => Math.floor(Math.random() * 14) + 3);
 
-// ─── Image Viewer Modal ───────────────────────────────────────────────────────
+// ─── Image Viewer Modal (with pinch-to-zoom) ──────────────────────────────────
 
 const ImageViewerModal = ({
   visible,
@@ -214,21 +217,94 @@ const ImageViewerModal = ({
   uri: string | null;
   onClose: () => void;
 }) => {
+  const scale = useRef(new Animated.Value(1)).current;
+  const lastScale = useRef(1);
+  const translateX = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(0)).current;
+  const lastTranslate = useRef({ x: 0, y: 0 });
+  const initialDistance = useRef<number | null>(null);
+
+  const resetTransform = () => {
+    lastScale.current = 1;
+    lastTranslate.current = { x: 0, y: 0 };
+    scale.setValue(1);
+    translateX.setValue(0);
+    translateY.setValue(0);
+  };
+
+  useEffect(() => {
+    if (visible) resetTransform();
+  }, [visible, uri]);
+
+  const getDistance = (touches: any[]) => {
+    const dx = touches[0].pageX - touches[1].pageX;
+    const dy = touches[0].pageY - touches[1].pageY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: () => true,
+    onPanResponderGrant: (e) => {
+      if (e.nativeEvent.touches.length === 2) {
+        initialDistance.current = getDistance(e.nativeEvent.touches as any);
+      }
+    },
+    onPanResponderMove: (e, g) => {
+      if (e.nativeEvent.touches.length === 2) {
+        const dist = getDistance(e.nativeEvent.touches as any);
+        if (initialDistance.current) {
+          const newScale = Math.max(1, Math.min(5, lastScale.current * (dist / initialDistance.current)));
+          scale.setValue(newScale);
+        }
+      } else if (e.nativeEvent.touches.length === 1 && lastScale.current > 1) {
+        translateX.setValue(lastTranslate.current.x + g.dx);
+        translateY.setValue(lastTranslate.current.y + g.dy);
+      }
+    },
+    onPanResponderRelease: (e, g) => {
+      if (e.nativeEvent.touches.length === 0) {
+        lastScale.current = (scale as any)._value;
+        lastTranslate.current = {
+          x: (translateX as any)._value,
+          y: (translateY as any)._value,
+        };
+        if (lastScale.current <= 1) {
+          resetTransform();
+        }
+        initialDistance.current = null;
+      }
+    },
+  });
+
   if (!uri) return null;
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={imgStyles.overlay}>
-          <TouchableOpacity style={imgStyles.closeBtn} onPress={onClose}>
-            <Icon name="close" size={26} color="#fff" />
-          </TouchableOpacity>
+      <View style={imgStyles.overlay}>
+        <TouchableOpacity style={imgStyles.closeBtn} onPress={onClose}>
+          <Icon name="close" size={26} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={imgStyles.resetBtn} onPress={resetTransform}>
+          <Icon name="contract-outline" size={20} color="#fff" />
+        </TouchableOpacity>
+        <Animated.View
+          style={{
+            transform: [
+              { scale },
+              { translateX },
+              { translateY },
+            ],
+          }}
+          {...panResponder.panHandlers}
+        >
           <Image
             source={{ uri }}
             style={imgStyles.fullImage}
             resizeMode="contain"
           />
-        </View>
-      </TouchableWithoutFeedback>
+        </Animated.View>
+        <Text style={imgStyles.zoomHint}>Pinch to zoom • Drag to pan</Text>
+      </View>
     </Modal>
   );
 };
@@ -236,7 +312,7 @@ const ImageViewerModal = ({
 const imgStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.92)',
+    backgroundColor: 'rgba(0,0,0,0.96)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -249,9 +325,24 @@ const imgStyles = StyleSheet.create({
     borderRadius: 20,
     padding: 8,
   },
+  resetBtn: {
+    position: 'absolute',
+    top: 54,
+    left: 20,
+    zIndex: 10,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 20,
+    padding: 8,
+  },
   fullImage: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.8,
+    height: SCREEN_HEIGHT * 0.82,
+  },
+  zoomHint: {
+    position: 'absolute',
+    bottom: 40,
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
   },
 });
 
@@ -356,7 +447,7 @@ const VoiceMessagePlayer = ({
   isMe: boolean;
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0); // 0-1
+  const [progress, setProgress] = useState(0);
   const [currentTime, setCurrentTime] = useState('0:00');
   const soundRef = useRef<Audio.Sound | null>(null);
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
@@ -377,10 +468,7 @@ const VoiceMessagePlayer = ({
 
   const togglePlay = async () => {
     if (isPlaying) {
-      // Pause
-      if (soundRef.current) {
-        await soundRef.current.pauseAsync();
-      }
+      if (soundRef.current) await soundRef.current.pauseAsync();
       if (progressInterval.current) clearInterval(progressInterval.current);
       setIsPlaying(false);
       return;
@@ -388,12 +476,9 @@ const VoiceMessagePlayer = ({
 
     setIsPlaying(true);
 
-    // If we have a real URI, try to play it
     if (media.uri) {
       try {
-        if (soundRef.current) {
-          await soundRef.current.unloadAsync();
-        }
+        if (soundRef.current) await soundRef.current.unloadAsync();
         const { sound } = await Audio.Sound.createAsync(
           { uri: media.uri },
           { shouldPlay: true }
@@ -417,7 +502,6 @@ const VoiceMessagePlayer = ({
       }
     }
 
-    // Simulated playback
     const startTime = Date.now();
     if (progressInterval.current) clearInterval(progressInterval.current);
     progressInterval.current = setInterval(() => {
@@ -438,7 +522,10 @@ const VoiceMessagePlayer = ({
 
   return (
     <View style={voiceStyles.container}>
-      <TouchableOpacity style={[voiceStyles.playBtn, isMe ? voiceStyles.playBtnMe : voiceStyles.playBtnThem]} onPress={togglePlay}>
+      <TouchableOpacity
+        style={[voiceStyles.playBtn, isMe ? voiceStyles.playBtnMe : voiceStyles.playBtnThem]}
+        onPress={togglePlay}
+      >
         <Icon name={isPlaying ? 'pause' : 'play'} size={18} color="#fff" />
       </TouchableOpacity>
       <View style={voiceStyles.waveContainer}>
@@ -535,7 +622,6 @@ const LiveRecordingUI = ({
       </TouchableOpacity>
 
       <View style={liveStyles.waveArea}>
-        {/* Waveform bars */}
         <View style={liveStyles.barsRow}>
           {waveform.slice(-28).map((h, i) => (
             <Animated.View
@@ -631,6 +717,7 @@ const liveStyles = StyleSheet.create({
 });
 
 // ─── Swipeable Message Component ─────────────────────────────────────────────
+// FIX: Reply animation — translated message sticks to reply indicator while swiping
 
 const SwipeableMessage = ({
   item,
@@ -644,72 +731,163 @@ const SwipeableMessage = ({
   onImagePress: (uri: string) => void;
 }) => {
   const translateX = useRef(new Animated.Value(0)).current;
+  const replyIndicatorOpacity = useRef(new Animated.Value(0)).current;
+  const replyIndicatorScale = useRef(new Animated.Value(0.5)).current;
   const [showEmojis, setShowEmojis] = useState(false);
+  const hasTriggeredReply = useRef(false);
+
+  const REPLY_THRESHOLD = 65;
 
   const panResponder = PanResponder.create({
-    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10,
+    onMoveShouldSetPanResponder: (_, g) =>
+      Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+    onPanResponderGrant: () => {
+      hasTriggeredReply.current = false;
+    },
     onPanResponderMove: (_, g) => {
-      if (item.isMe && g.dx < 0) translateX.setValue(g.dx);
-      if (!item.isMe && g.dx > 0) translateX.setValue(g.dx);
+      // right-to-left for my messages, left-to-right for theirs
+      if (item.isMe && g.dx < 0) {
+        const val = Math.max(g.dx, -REPLY_THRESHOLD - 10);
+        translateX.setValue(val);
+        const progress = Math.min(Math.abs(val) / REPLY_THRESHOLD, 1);
+        replyIndicatorOpacity.setValue(progress);
+        replyIndicatorScale.setValue(0.5 + progress * 0.5);
+      } else if (!item.isMe && g.dx > 0) {
+        const val = Math.min(g.dx, REPLY_THRESHOLD + 10);
+        translateX.setValue(val);
+        const progress = Math.min(val / REPLY_THRESHOLD, 1);
+        replyIndicatorOpacity.setValue(progress);
+        replyIndicatorScale.setValue(0.5 + progress * 0.5);
+      }
     },
     onPanResponderRelease: (_, g) => {
-      if (Math.abs(g.dx) > 60) onReply(item);
-      Animated.spring(translateX, { toValue: 0, useNativeDriver: true }).start();
+      const dist = Math.abs(g.dx);
+      if (dist >= REPLY_THRESHOLD && !hasTriggeredReply.current) {
+        hasTriggeredReply.current = true;
+        onReply(item);
+      }
+      Animated.parallel([
+        Animated.spring(translateX, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 120,
+          friction: 8,
+        }),
+        Animated.timing(replyIndicatorOpacity, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(replyIndicatorScale, {
+          toValue: 0.5,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
     },
   });
 
   return (
-    <View>
+    <View style={{ marginVertical: 2 }}>
+      {/* Reply preview above bubble */}
       {item.replyTo && (
-        <View style={[styles.replyPreviewBubble, item.isMe ? { alignSelf: 'flex-end', marginRight: 8 } : { alignSelf: 'flex-start', marginLeft: 8 }]}>
+        <View style={[
+          styles.replyPreviewBubble,
+          item.isMe
+            ? { alignSelf: 'flex-end', marginRight: 8 }
+            : { alignSelf: 'flex-start', marginLeft: 8 },
+        ]}>
           <Text style={styles.replyPreviewSender}>{item.replyTo.senderName}</Text>
           <Text style={styles.replyPreviewText} numberOfLines={1}>{item.replyTo.text}</Text>
         </View>
       )}
 
-      <Animated.View
-        style={{ transform: [{ translateX }] }}
-        {...panResponder.panHandlers}
-      >
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onLongPress={() => setShowEmojis(true)}
-          delayLongPress={400}
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        {/* Reply indicator for their messages (left side) */}
+        {!item.isMe && (
+          <Animated.View style={[
+            swipeStyles.replyIndicator,
+            { opacity: replyIndicatorOpacity, transform: [{ scale: replyIndicatorScale }] },
+            { left: 4 },
+          ]}>
+            <Icon name="return-up-forward" size={16} color="#6C5CE7" />
+          </Animated.View>
+        )}
+
+        <Animated.View
+          style={[{ flex: 1, transform: [{ translateX }] }]}
+          {...panResponder.panHandlers}
         >
-          <View style={[styles.messageBubble, item.isMe ? styles.myMessage : styles.theirMessage]}>
-            {item.media?.type === 'image' && item.media.uri && (
-              <TouchableOpacity onPress={() => onImagePress(item.media!.uri!)}>
-                <Image
-                  source={{ uri: item.media.uri }}
-                  style={styles.messageImage}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            )}
-            {item.media?.type === 'voice' && (
-              <VoiceMessagePlayer media={item.media} isMe={item.isMe} />
-            )}
-            {item.media?.type === 'file' && (
-              <View style={styles.fileBubble}>
-                <Icon name="document-attach" size={22} color={item.isMe ? '#fff' : '#6C5CE7'} />
-                <Text style={[styles.fileName, item.isMe && { color: '#fff' }]} numberOfLines={1}>{item.media.name}</Text>
-              </View>
-            )}
-            {item.text ? (
-              <Text style={[styles.messageText, item.isMe ? styles.myMessageText : styles.theirMessageText]}>
-                {item.text}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onLongPress={() => setShowEmojis(true)}
+            delayLongPress={350}
+          >
+            <View style={[
+              styles.messageBubble,
+              item.isMe ? styles.myMessage : styles.theirMessage,
+            ]}>
+              {item.media?.type === 'image' && item.media.uri && (
+                <TouchableOpacity onPress={() => onImagePress(item.media!.uri!)}>
+                  <Image
+                    source={{ uri: item.media.uri }}
+                    style={styles.messageImage}
+                    resizeMode="cover"
+                  />
+                </TouchableOpacity>
+              )}
+              {item.media?.type === 'voice' && (
+                <VoiceMessagePlayer media={item.media} isMe={item.isMe} />
+              )}
+              {item.media?.type === 'file' && (
+                <View style={styles.fileBubble}>
+                  <Icon name="document-attach" size={22} color={item.isMe ? '#fff' : '#6C5CE7'} />
+                  <Text
+                    style={[styles.fileName, item.isMe && { color: '#fff' }]}
+                    numberOfLines={1}
+                  >
+                    {item.media.name}
+                  </Text>
+                </View>
+              )}
+              {item.text ? (
+                <Text style={[
+                  styles.messageText,
+                  item.isMe ? styles.myMessageText : styles.theirMessageText,
+                ]}>
+                  {item.text}
+                </Text>
+              ) : null}
+              <Text style={[
+                styles.messageTime,
+                item.isMe ? { color: 'rgba(255,255,255,0.65)' } : {},
+              ]}>
+                {item.time}
               </Text>
-            ) : null}
-            <Text style={[styles.messageTime, item.isMe ? { color: 'rgba(255,255,255,0.65)' } : {}]}>
-              {item.time}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Reply indicator for my messages (right side) */}
+        {item.isMe && (
+          <Animated.View style={[
+            swipeStyles.replyIndicator,
+            { opacity: replyIndicatorOpacity, transform: [{ scale: replyIndicatorScale }] },
+            { right: 4 },
+          ]}>
+            <Icon name="return-up-back" size={16} color="#6C5CE7" />
+          </Animated.View>
+        )}
+      </View>
 
       {/* Reactions display */}
       {item.reactions && item.reactions.length > 0 && (
-        <View style={[styles.reactionsRow, item.isMe ? { alignSelf: 'flex-end', marginRight: 12 } : { alignSelf: 'flex-start', marginLeft: 12 }]}>
+        <View style={[
+          styles.reactionsRow,
+          item.isMe
+            ? { alignSelf: 'flex-end', marginRight: 12 }
+            : { alignSelf: 'flex-start', marginLeft: 12 },
+        ]}>
           {item.reactions.map((r, i) => (
             <TouchableOpacity
               key={i}
@@ -725,7 +903,12 @@ const SwipeableMessage = ({
 
       {/* Emoji picker popup */}
       {showEmojis && (
-        <View style={[styles.emojiPicker, item.isMe ? { alignSelf: 'flex-end', marginRight: 8 } : { alignSelf: 'flex-start', marginLeft: 8 }]}>
+        <View style={[
+          styles.emojiPicker,
+          item.isMe
+            ? { alignSelf: 'flex-end', marginRight: 8 }
+            : { alignSelf: 'flex-start', marginLeft: 8 },
+        ]}>
           {EMOJI_REACTIONS.map((emoji) => {
             const alreadyReacted = item.reactions?.find(r => r.emoji === emoji && r.reactedByMe);
             return (
@@ -750,6 +933,132 @@ const SwipeableMessage = ({
   );
 };
 
+const swipeStyles = StyleSheet.create({
+  replyIndicator: {
+    position: 'absolute',
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#EDE9FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 0,
+  },
+});
+
+// ─── AI Conversation Table Modal ──────────────────────────────────────────────
+
+type AIConvRow = {
+  id: string;
+  chatId: string;
+  chatName: string;
+  chatAvatar: string;
+  userMsg: string;
+  aiReply: string;
+  time: string;
+};
+
+const AIConversationsModal = ({
+  visible,
+  onClose,
+  rows,
+  onRowPress,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  rows: AIConvRow[];
+  onRowPress: (chatId: string) => void;
+}) => {
+  return (
+    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
+      <SafeAreaView style={aiTableStyles.container}>
+        <View style={aiTableStyles.header}>
+          <TouchableOpacity onPress={onClose}>
+            <Icon name="arrow-back" size={22} color="#1a1a2e" />
+          </TouchableOpacity>
+          <Text style={aiTableStyles.title}>AI Conversation History</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        {rows.length === 0 ? (
+          <View style={aiTableStyles.empty}>
+            <Text style={{ fontSize: 40, marginBottom: 12 }}>🤖</Text>
+            <Text style={aiTableStyles.emptyText}>No AI conversations yet</Text>
+            <Text style={aiTableStyles.emptySubText}>Start chatting with the AI Assistant</Text>
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={{ padding: 14 }}>
+            {/* Table header */}
+            <View style={aiTableStyles.tableHeader}>
+              <Text style={[aiTableStyles.th, { flex: 1.2 }]}>Contact</Text>
+              <Text style={[aiTableStyles.th, { flex: 2 }]}>You said</Text>
+              <Text style={[aiTableStyles.th, { flex: 2 }]}>AI replied</Text>
+              <Text style={[aiTableStyles.th, { flex: 0.8 }]}>Time</Text>
+            </View>
+            {rows.map((row, i) => (
+              <TouchableOpacity
+                key={row.id}
+                style={[aiTableStyles.tableRow, i % 2 === 0 && aiTableStyles.rowAlt]}
+                onPress={() => onRowPress(row.chatId)}
+              >
+                <View style={[aiTableStyles.td, { flex: 1.2, flexDirection: 'row', alignItems: 'center', gap: 6 }]}>
+                  <Text style={{ fontSize: 18 }}>{row.chatAvatar}</Text>
+                  <Text style={aiTableStyles.tdName} numberOfLines={1}>{row.chatName}</Text>
+                </View>
+                <Text style={[aiTableStyles.tdText, { flex: 2 }]} numberOfLines={2}>{row.userMsg}</Text>
+                <Text style={[aiTableStyles.tdReply, { flex: 2 }]} numberOfLines={2}>{row.aiReply}</Text>
+                <Text style={[aiTableStyles.tdTime, { flex: 0.8 }]}>{row.time}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
+      </SafeAreaView>
+    </Modal>
+  );
+};
+
+const aiTableStyles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F5',
+  },
+  title: { fontSize: 17, fontWeight: '700', color: '#1a1a2e' },
+  empty: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyText: { fontSize: 18, fontWeight: '700', color: '#1a1a2e' },
+  emptySubText: { fontSize: 14, color: '#aaa', marginTop: 6 },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#6C5CE7',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    marginBottom: 4,
+  },
+  th: { fontSize: 11, fontWeight: '800', color: '#fff', textTransform: 'uppercase', letterSpacing: 0.5 },
+  tableRow: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F5',
+    alignItems: 'flex-start',
+  },
+  rowAlt: { backgroundColor: '#F7F5FF' },
+  td: {},
+  tdName: { fontSize: 12, fontWeight: '700', color: '#1a1a2e', flexShrink: 1 },
+  tdText: { fontSize: 12, color: '#444', lineHeight: 17 },
+  tdReply: { fontSize: 12, color: '#6C5CE7', lineHeight: 17 },
+  tdTime: { fontSize: 11, color: '#aaa', textAlign: 'right' },
+});
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 const ChatApp = () => {
@@ -757,13 +1066,21 @@ const ChatApp = () => {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
+  // FIX: dynamic search
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modals
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [showNewGroupModal, setShowNewGroupModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  // FIX: track what screen opened the image viewer so we return there
   const [imageViewerUri, setImageViewerUri] = useState<string | null>(null);
+  const [imageViewerSource, setImageViewerSource] = useState<'chat' | 'info'>('chat');
   const [showProfileImage, setShowProfileImage] = useState(false);
+  const [showAITable, setShowAITable] = useState(false);
+
+  // AI conversation log across all contacts
+  const [aiConvRows, setAiConvRows] = useState<AIConvRow[]>([]);
 
   // Group creation
   const [newGroupName, setNewGroupName] = useState('');
@@ -795,12 +1112,14 @@ const ChatApp = () => {
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (showAITable) { setShowAITable(false); return true; }
+      if (showAddMemberModal) { setShowAddMemberModal(false); return true; }
       if (showInfoModal) { setShowInfoModal(false); return true; }
       if (selectedChat) { setSelectedChat(null); return true; }
       return false;
     });
     return () => backHandler.remove();
-  }, [selectedChat, showInfoModal]);
+  }, [selectedChat, showInfoModal, showAITable, showAddMemberModal]);
 
   useEffect(() => {
     (async () => {
@@ -828,6 +1147,7 @@ const ChatApp = () => {
   const openChat = (chat: Chat) => {
     setSelectedChat(chat);
     setReplyingTo(null);
+    setSearchQuery('');
     if (chat.name === 'Sarah Johnson') {
       setMessages(sarahMessages);
     } else if (chat.isAI) {
@@ -844,9 +1164,28 @@ const ChatApp = () => {
     }
   };
 
+  // FIX: image viewer open helpers — track source so back returns correctly
+  const openImageFromChat = (uri: string) => {
+    setImageViewerSource('chat');
+    setImageViewerUri(uri);
+  };
+
+  const openImageFromInfo = (uri: string) => {
+    setShowInfoModal(false);
+    setImageViewerSource('info');
+    setImageViewerUri(uri);
+  };
+
+  const closeImageViewer = () => {
+    setImageViewerUri(null);
+    if (imageViewerSource === 'info') {
+      setShowInfoModal(true);
+    }
+  };
+
   const sendMessage = (overrideText?: string) => {
     const text = (overrideText ?? inputText).trim();
-    if (!text && !selectedChat) return;
+    if (!text) return;
 
     const newMsg: Message = {
       id: Date.now().toString(),
@@ -868,25 +1207,43 @@ const ChatApp = () => {
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
     if (selectedChat?.isAI) {
+      const aiReplyText = "That's a great point! Let me help you with that. How can I assist further? 🤖";
       setTimeout(() => {
+        const time = currentTime();
         const aiReply: Message = {
           id: (Date.now() + 1).toString(),
-          text: "That's a great point! Let me help you with that. How can I assist further? 🤖",
+          text: aiReplyText,
           isMe: false,
-          time: currentTime(),
+          time,
         };
         setMessages(prev => [...prev, aiReply]);
         setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+
+        // Save to AI conversation table
+        setAiConvRows(prev => [
+          {
+            id: Date.now().toString(),
+            chatId: selectedChat.id,
+            chatName: selectedChat.name,
+            chatAvatar: selectedChat.avatar,
+            userMsg: text,
+            aiReply: aiReplyText,
+            time,
+          },
+          ...prev,
+        ]);
       }, 900);
     }
   };
 
+  // FIX: image picker — disable allowsEditing to avoid crop button confusion
+  // Instead use a simple full picker with no crop constraint
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        quality: 1,
+        allowsEditing: false, // FIX: removed crop to avoid confusing crop button
+        quality: 0.85,
       });
 
       if (!result.canceled && result.assets?.[0]) {
@@ -948,8 +1305,10 @@ const ChatApp = () => {
   };
 
   // ── Voice Recording ───────────────────────────────────────────────────────
+  // FIX: voice works on single tap, long press, AND drag-left gesture
 
   const startRecording = async () => {
+    if (isRecording) return;
     try {
       if (recordingRef.current) {
         await recordingRef.current.stopAndUnloadAsync();
@@ -972,7 +1331,6 @@ const ChatApp = () => {
         const secs = Math.floor((elapsed % 60000) / 1000);
         setRecordDuration(`${mins}:${secs < 10 ? '0' + secs : secs}`);
         setRecordDurationMs(elapsed);
-        // Add a new random bar to the live waveform
         setLiveWaveform(prev => [...prev, Math.floor(Math.random() * 14) + 3]);
       }, 150);
     } catch (err) {
@@ -1003,7 +1361,7 @@ const ChatApp = () => {
       setRecording(null);
       setIsRecording(false);
 
-      if (capturedDurationMs > 500) {
+      if (capturedDurationMs > 300) {
         const waveformData = capturedWaveform.length > 0
           ? capturedWaveform
           : generateWaveform(25);
@@ -1028,7 +1386,6 @@ const ChatApp = () => {
       setRecordDuration('0:00');
       setRecordDurationMs(0);
       setLiveWaveform([]);
-
       await Audio.setAudioModeAsync({ allowsRecordingIOS: false, playsInSilentModeIOS: true });
     } catch (err) {
       recordingRef.current = null;
@@ -1043,9 +1400,7 @@ const ChatApp = () => {
       waveformInterval.current = null;
     }
     if (recordingRef.current) {
-      try {
-        await recordingRef.current.stopAndUnloadAsync();
-      } catch {}
+      try { await recordingRef.current.stopAndUnloadAsync(); } catch {}
       recordingRef.current = null;
     }
     setRecording(null);
@@ -1054,6 +1409,24 @@ const ChatApp = () => {
     setRecordDurationMs(0);
     setLiveWaveform([]);
   };
+
+  // FIX: Mic button pan responder — drag left to start recording
+  const micPanResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onPanResponderGrant: () => {
+      // Single touch starts recording
+      startRecording();
+    },
+    onPanResponderRelease: (_, g) => {
+      // Release finger → send
+      if (isRecording || recordingRef.current) {
+        stopRecordingAndSend();
+      }
+    },
+    onPanResponderTerminate: () => {
+      cancelRecording();
+    },
+  });
 
   // ── Reactions ─────────────────────────────────────────────────────────────
 
@@ -1065,7 +1438,6 @@ const ChatApp = () => {
 
         if (existing) {
           if (existing.reactedByMe) {
-            // Undo: decrease count or remove
             const newCount = existing.count - 1;
             if (newCount <= 0) {
               return { ...m, reactions: m.reactions!.filter(r => r.emoji !== emoji) };
@@ -1077,7 +1449,6 @@ const ChatApp = () => {
               ),
             };
           } else {
-            // Already exists but not by me — add my reaction
             return {
               ...m,
               reactions: m.reactions!.map(r =>
@@ -1086,7 +1457,6 @@ const ChatApp = () => {
             };
           }
         }
-        // New reaction
         return { ...m, reactions: [...(m.reactions ?? []), { emoji, count: 1, reactedByMe: true }] };
       })
     );
@@ -1174,7 +1544,11 @@ const ChatApp = () => {
     c.name.toLowerCase().includes(addMemberSearchQuery.toLowerCase())
   );
 
-  const sortedChats = [...chats.filter(c => c.isAI), ...chats.filter(c => !c.isAI)];
+  // FIX: dynamic search filter
+  const filteredChats = [...chats.filter(c => c.isAI), ...chats.filter(c => !c.isAI)].filter(c =>
+    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.lastMessage.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -1210,10 +1584,11 @@ const ChatApp = () => {
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
 
       {/* ── Image Viewer ──────────────────────────────────────────────── */}
+      {/* FIX: use custom close that returns to correct screen */}
       <ImageViewerModal
         visible={!!imageViewerUri}
         uri={imageViewerUri}
-        onClose={() => setImageViewerUri(null)}
+        onClose={closeImageViewer}
       />
 
       {/* ── Profile Image Viewer ──────────────────────────────────────── */}
@@ -1223,16 +1598,39 @@ const ChatApp = () => {
         onClose={() => setShowProfileImage(false)}
       />
 
+      {/* ── AI Conversation Table ─────────────────────────────────────── */}
+      <AIConversationsModal
+        visible={showAITable}
+        onClose={() => setShowAITable(false)}
+        rows={aiConvRows}
+        onRowPress={(chatId) => {
+          setShowAITable(false);
+          // open the relevant chat
+          const chat = chats.find(c => c.id === chatId);
+          if (chat) openChat(chat);
+        }}
+      />
+
       {/* ── Chats List ──────────────────────────────────────────────────── */}
       {!selectedChat && (
         <>
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Messages</Text>
-            <TouchableOpacity style={styles.newChatBtn} onPress={() => setShowNewChatModal(true)}>
-              <Icon name="create-outline" size={24} color="#6C5CE7" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 4 }}>
+              {/* AI history table button */}
+              <TouchableOpacity
+                style={[styles.newChatBtn, { backgroundColor: '#EDE9FF', borderRadius: 10, marginRight: 4 }]}
+                onPress={() => setShowAITable(true)}
+              >
+                <Icon name="analytics-outline" size={22} color="#6C5CE7" />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.newChatBtn} onPress={() => setShowNewChatModal(true)}>
+                <Icon name="create-outline" size={24} color="#6C5CE7" />
+              </TouchableOpacity>
+            </View>
           </View>
 
+          {/* FIX: dynamic search bar */}
           <View style={styles.searchContainer}>
             <View style={styles.searchBar}>
               <Icon name="search" size={18} color="#999" />
@@ -1240,16 +1638,32 @@ const ChatApp = () => {
                 style={styles.searchInput}
                 placeholder="Search conversations..."
                 placeholderTextColor="#999"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                returnKeyType="search"
+                clearButtonMode="while-editing"
               />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Icon name="close-circle" size={18} color="#bbb" />
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 
-          <FlatList
-            data={sortedChats}
-            keyExtractor={item => item.id}
-            renderItem={renderChatItem}
-            contentContainerStyle={{ paddingBottom: 100 }}
-          />
+          {filteredChats.length === 0 && searchQuery.length > 0 ? (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <Text style={{ fontSize: 36, marginBottom: 10 }}>🔍</Text>
+              <Text style={{ fontSize: 16, color: '#888' }}>No results for "{searchQuery}"</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={filteredChats}
+              keyExtractor={item => item.id}
+              renderItem={renderChatItem}
+              contentContainerStyle={{ paddingBottom: 100 }}
+            />
+          )}
 
           <TouchableOpacity style={styles.floatingButton} onPress={() => setShowNewGroupModal(true)}>
             <Icon name="people" size={26} color="#fff" />
@@ -1276,7 +1690,6 @@ const ChatApp = () => {
                   style={styles.chatHeaderProfile}
                   onPress={() => setShowInfoModal(true)}
                 >
-                  {/* Tapping avatar opens profile image viewer */}
                   <TouchableOpacity
                     onPress={() => setShowProfileImage(true)}
                     style={[styles.chatHeaderAvatar, selectedChat.isAI && styles.aiAvatar]}
@@ -1287,7 +1700,7 @@ const ChatApp = () => {
                     <Text style={styles.chatHeaderName}>{selectedChat.name}</Text>
                     <Text style={[
                       styles.chatHeaderStatus,
-                      selectedChat.isOnline || selectedChat.isAI ? styles.onlineText : styles.offlineText
+                      selectedChat.isOnline || selectedChat.isAI ? styles.onlineText : styles.offlineText,
                     ]}>
                       {selectedChat.isAI
                         ? '● Always available'
@@ -1331,7 +1744,7 @@ const ChatApp = () => {
                     item={item}
                     onReply={msg => setReplyingTo(msg)}
                     onReact={handleReact}
-                    onImagePress={(uri) => setImageViewerUri(uri)}
+                    onImagePress={openImageFromChat}
                   />
                 )}
                 contentContainerStyle={styles.messagesList}
@@ -1362,7 +1775,9 @@ const ChatApp = () => {
                       <Text style={styles.replyBannerSender}>
                         {replyingTo.isMe ? 'You' : selectedChat.name}
                       </Text>
-                      <Text style={styles.replyBannerText} numberOfLines={1}>{replyingTo.text}</Text>
+                      <Text style={styles.replyBannerText} numberOfLines={1}>
+                        {replyingTo.text ?? (replyingTo.media?.type === 'voice' ? '🎤 Voice message' : '📎 Attachment')}
+                      </Text>
                     </View>
                   </View>
                   <TouchableOpacity onPress={() => setReplyingTo(null)}>
@@ -1403,12 +1818,14 @@ const ChatApp = () => {
                       <Icon name="send" size={20} color="#fff" />
                     </TouchableOpacity>
                   ) : (
+                    // FIX: mic button — tap once OR hold OR drag-left to record
                     <TouchableOpacity
                       style={styles.micBtn}
+                      onPress={startRecording}
                       onLongPress={startRecording}
-                      delayLongPress={100}
+                      delayLongPress={80}
                     >
-                      <Icon name="mic-outline" size={24} color="#6C5CE7" />
+                      <Icon name="mic" size={24} color="#6C5CE7" />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -1432,7 +1849,6 @@ const ChatApp = () => {
           </View>
 
           <ScrollView contentContainerStyle={styles.infoContent}>
-            {/* Avatar - Tappable to show profile image */}
             <TouchableOpacity
               style={[styles.infoAvatar, selectedChat?.isAI && styles.aiAvatar]}
               onPress={() => {
@@ -1505,7 +1921,10 @@ const ChatApp = () => {
                   <Text style={styles.infoSectionTitle}>
                     Members ({selectedChat.members?.length ?? 0})
                   </Text>
-                  <TouchableOpacity onPress={() => setShowAddMemberModal(true)} style={styles.addMemberBtn}>
+                  <TouchableOpacity
+                    onPress={() => setShowAddMemberModal(true)}
+                    style={styles.addMemberBtn}
+                  >
                     <Icon name="person-add-outline" size={16} color="#6C5CE7" />
                     <Text style={styles.addMemberText}>Add</Text>
                   </TouchableOpacity>
@@ -1526,7 +1945,7 @@ const ChatApp = () => {
               </View>
             )}
 
-            {/* Shared Images - Tappable */}
+            {/* Shared Images — FIX: tapping opens image viewer and returns to info */}
             {(selectedChat?.sharedImages?.length ?? 0) > 0 && (
               <View style={styles.infoSection}>
                 <Text style={styles.infoSectionTitle}>
@@ -1536,15 +1955,9 @@ const ChatApp = () => {
                   {selectedChat!.sharedImages!.map(img => (
                     <TouchableOpacity
                       key={img.id}
-                      onPress={() => {
-                        setShowInfoModal(false);
-                        setImageViewerUri(img.uri ?? null);
-                      }}
+                      onPress={() => openImageFromInfo(img.uri ?? '')}
                     >
-                      <Image
-                        source={{ uri: img.uri }}
-                        style={styles.sharedImage}
-                      />
+                      <Image source={{ uri: img.uri }} style={styles.sharedImage} />
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
@@ -1578,7 +1991,7 @@ const ChatApp = () => {
             <Text style={styles.modalTitle}>New Chat</Text>
             <TextInput
               style={styles.modalInput}
-              placeholder="Contact name"
+              placeholder="Contact name or Email"
               placeholderTextColor="#aaa"
               value={newContactName}
               onChangeText={setNewContactName}
@@ -1600,17 +2013,6 @@ const ChatApp = () => {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { maxHeight: '80%' }]}>
             <Text style={styles.modalTitle}>Create Group</Text>
-            <View style={styles.groupAvatarSection}>
-              <Text style={styles.modalSubLabel}>Group Avatar (Emoji)</Text>
-              <TextInput
-                style={styles.avatarInput}
-                placeholder="Enter emoji"
-                placeholderTextColor="#aaa"
-                value={groupAvatar}
-                onChangeText={setGroupAvatar}
-                maxLength={2}
-              />
-            </View>
             <TextInput
               style={styles.modalInput}
               placeholder="Group name"
@@ -1670,11 +2072,21 @@ const ChatApp = () => {
         </View>
       </Modal>
 
-      {/* ── Add Member Modal ──────────────────────────────────────────────── */}
+      {/* ── Add Member Modal — FIX: added proper Cancel/back button ──────── */}
       <Modal visible={showAddMemberModal} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { maxHeight: '70%' }]}>
-            <Text style={styles.modalTitle}>Add Member</Text>
+            {/* FIX: header with back button */}
+            <View style={addMemberStyles.header}>
+              <TouchableOpacity
+                onPress={() => { setShowAddMemberModal(false); setAddMemberSearchQuery(''); }}
+                style={addMemberStyles.backBtn}
+              >
+                <Icon name="arrow-back" size={20} color="#1a1a2e" />
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>Add Member</Text>
+              <View style={{ width: 36 }} />
+            </View>
             <TextInput
               style={styles.searchInputModal}
               placeholder="Search contacts..."
@@ -1720,6 +2132,23 @@ const ChatApp = () => {
     </SafeAreaView>
   );
 };
+
+const addMemberStyles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  backBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F3F7',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 

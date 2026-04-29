@@ -16,7 +16,10 @@ const MAPPING: IconMapping = {
   'paperplane.fill': 'send',
   'chevron.right': 'chevron-right',
   'chevron.left.forwardslash.chevron.right': 'code',
-  // Add more as needed
+  'bell.fill': 'notifications',
+  'gear': 'settings',
+  'lock.fill': 'lock',
+  'questionmark.circle.fill': 'help',
 };
 
 type IconSymbolName = keyof typeof MAPPING;
