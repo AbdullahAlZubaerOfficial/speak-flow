@@ -22,6 +22,7 @@ import {
   Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { Bot, Users, Search, MoreVertical, Edit, Phone, Video, Info, Mic, Plus, FileText, Image as ImageIcon, Check, CheckCheck, Smile, X, Send, Heart, Laugh, AlertCircle, Frown, ThumbsUp, Flame, ChevronLeft, Volume2, BookOpen, Briefcase } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import { Audio } from 'expo-av';
@@ -53,14 +54,19 @@ type Message = {
 type Member = {
   id: string;
   name: string;
-  avatar: string;
+  initials: string;
+  avatarBg: string;
+  avatarCol: string;
   isOnline?: boolean;
 };
 
 type Chat = {
   id: string;
   name: string;
-  avatar: string;
+  initials?: string;
+  avatarBg?: string;
+  avatarCol?: string;
+  Icon?: React.ComponentType<any>;
   lastMessage: string;
   time: string;
   unread?: number;
@@ -81,19 +87,21 @@ type Chat = {
 // ─── Dummy Data ───────────────────────────────────────────────────────────────
 
 const ALL_CONTACTS: Member[] = [
-  { id: 'c1', name: 'Sarah Johnson', avatar: '👩🏻', isOnline: true },
-  { id: 'c2', name: 'Mike Chen', avatar: '🧔🏻', isOnline: true },
-  { id: 'c3', name: 'Emily Rose', avatar: '👩🏽', isOnline: false },
-  { id: 'c4', name: 'David Park', avatar: '👨🏻', isOnline: true },
-  { id: 'c5', name: 'Anika Rahman', avatar: '👩🏾', isOnline: false },
-  { id: 'c6', name: 'James Lee', avatar: '🧑🏻', isOnline: true },
+  { id: 'c1', name: 'Sarah Johnson', initials: 'SJ', avatarBg: '#E6F1FB', avatarCol: '#185FA5', isOnline: true },
+  { id: 'c2', name: 'Mike Chen', initials: 'MC', avatarBg: '#E1F5EE', avatarCol: '#0F6E56', isOnline: true },
+  { id: 'c3', name: 'Emily Rose', initials: 'ER', avatarBg: '#F3E5F5', avatarCol: '#6A1B9A', isOnline: false },
+  { id: 'c4', name: 'David Park', initials: 'DP', avatarBg: '#EAF3DE', avatarCol: '#3B6D11', isOnline: true },
+  { id: 'c5', name: 'Anika Rahman', initials: 'AR', avatarBg: '#FBEAF0', avatarCol: '#993556', isOnline: false },
+  { id: 'c6', name: 'James Lee', initials: 'JL', avatarBg: '#FFF3E0', avatarCol: '#E65100', isOnline: true },
 ];
 
 const initialChats: Chat[] = [
   {
     id: '1',
     name: 'AI Chat Assistant',
-    avatar: '🤖',
+    Icon: Bot,
+    avatarBg: '#000',
+    avatarCol: '#fff',
     lastMessage: 'Ask me anything or improve your English',
     time: '',
     isAI: true,
@@ -105,7 +113,9 @@ const initialChats: Chat[] = [
   {
     id: '2',
     name: 'Sarah Johnson',
-    avatar: '👩🏻',
+    initials: 'SJ',
+    avatarBg: '#E6F1FB',
+    avatarCol: '#185FA5',
     lastMessage: 'See you tomorrow at the meeting!',
     time: '2:45 PM',
     unread: 2,
@@ -127,13 +137,15 @@ const initialChats: Chat[] = [
   {
     id: '3',
     name: 'English Study Group',
-    avatar: '📚',
+    Icon: BookOpen,
+    avatarBg: '#E8EAF6',
+    avatarCol: '#3F51B5',
     lastMessage: 'John: Thanks for the vocabulary list',
     time: '1:20 PM',
     isGroup: true,
     members: [
-      { id: 'c1', name: 'Sarah Johnson', avatar: '👩🏻', isOnline: true },
-      { id: 'c2', name: 'Mike Chen', avatar: '🧔🏻', isOnline: true },
+      { id: 'c1', name: 'Sarah Johnson', initials: 'SJ', avatarBg: '#E6F1FB', avatarCol: '#185FA5', isOnline: true },
+      { id: 'c2', name: 'Mike Chen', initials: 'MC', avatarBg: '#E1F5EE', avatarCol: '#0F6E56', isOnline: true },
     ],
     sharedImages: [],
     sharedFiles: [],
@@ -141,7 +153,9 @@ const initialChats: Chat[] = [
   {
     id: '4',
     name: 'Mike Chen',
-    avatar: '🧔🏻',
+    initials: 'MC',
+    avatarBg: '#E1F5EE',
+    avatarCol: '#0F6E56',
     lastMessage: 'That sounds great! Let me check my schedule.',
     time: '11:30 AM',
     isOnline: true,
@@ -159,14 +173,16 @@ const initialChats: Chat[] = [
   {
     id: '5',
     name: 'Project Team',
-    avatar: '💼',
+    Icon: Briefcase,
+    avatarBg: '#FFF3E0',
+    avatarCol: '#E65100',
     lastMessage: 'Emily: Updated the task list',
     time: 'Yesterday',
     unread: 5,
     isGroup: true,
     members: [
-      { id: 'c3', name: 'Emily Rose', avatar: '👩🏽', isOnline: false },
-      { id: 'c4', name: 'David Park', avatar: '👨🏻', isOnline: true },
+      { id: 'c3', name: 'Emily Rose', initials: 'ER', avatarBg: '#F3E5F5', avatarCol: '#6A1B9A', isOnline: false },
+      { id: 'c4', name: 'David Park', initials: 'DP', avatarBg: '#EAF3DE', avatarCol: '#3B6D11', isOnline: true },
     ],
     sharedImages: [],
     sharedFiles: [],
@@ -200,7 +216,19 @@ const aiQuickPrompts = [
   "Check my grammar ✅",
 ];
 
-const EMOJI_REACTIONS = ['❤️', '😂', '😮', '😢', '👍', '🔥'];
+const EMOJI_REACTIONS = ['heart', 'laugh', 'wow', 'sad', 'like', 'fire'];
+
+const getReactionIcon = (reaction: string, size = 18, color = '#65676B') => {
+  switch (reaction) {
+    case 'heart': return <Heart size={size} color="#F33E58" />;
+    case 'laugh': return <Laugh size={size} color="#F7B928" />;
+    case 'wow': return <AlertCircle size={size} color="#F7B928" />;
+    case 'sad': return <Frown size={size} color="#F7B928" />;
+    case 'like': return <ThumbsUp size={size} color="#1877F2" />;
+    case 'fire': return <Flame size={size} color="#FF5A5F" />;
+    default: return <Heart size={size} color={color} />;
+  }
+};
 
 // Generate random waveform
 const generateWaveform = (bars = 30): number[] =>
@@ -373,8 +401,12 @@ const ProfileImageModal = ({
                 resizeMode="cover"
               />
             ) : (
-              <View style={profileImgStyles.emojiContainer}>
-                <Text style={{ fontSize: 80 }}>{chat.avatar}</Text>
+              <View style={[profileImgStyles.emojiContainer, { backgroundColor: chat.avatarBg || '#EDE9FF' }]}>
+                {chat.Icon ? (
+                  <chat.Icon size={80} color={chat.avatarCol || '#1C1C1E'} />
+                ) : (
+                  <Text style={{ fontSize: 80, color: chat.avatarCol || '#1C1C1E', fontWeight: '700' }}>{chat.initials}</Text>
+                )}
               </View>
             )}
             <Text style={profileImgStyles.name}>{chat.name}</Text>
@@ -1555,8 +1587,12 @@ const ChatApp = () => {
   const renderChatItem = ({ item }: { item: Chat }) => (
     <TouchableOpacity style={styles.chatItem} onPress={() => openChat(item)}>
       <View style={styles.avatarContainer}>
-        <View style={[styles.avatar, item.isAI && styles.aiAvatar]}>
-          <Text style={styles.avatarText}>{item.avatar}</Text>
+        <View style={[styles.avatar, { backgroundColor: item.avatarBg || '#EDE9FF' }]}>
+          {item.Icon ? (
+            <item.Icon size={26} color={item.avatarCol || '#1C1C1E'} />
+          ) : (
+            <Text style={[styles.avatarText, { color: item.avatarCol || '#1C1C1E' }]}>{item.initials}</Text>
+          )}
         </View>
         {item.isOnline && !item.isGroup && <View style={styles.onlineDot} />}
       </View>
@@ -1931,8 +1967,8 @@ const ChatApp = () => {
                 </View>
                 {(selectedChat.members ?? []).map(member => (
                   <View key={member.id} style={styles.memberRow}>
-                    <View style={styles.memberAvatar}>
-                      <Text style={{ fontSize: 20 }}>{member.avatar}</Text>
+                    <View style={[styles.memberAvatar, { backgroundColor: member.avatarBg || '#EDE9FF' }]}>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: member.avatarCol || '#1C1C1E' }}>{member.initials}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.memberName}>{member.name}</Text>
@@ -2200,7 +2236,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   aiAvatar: { backgroundColor: '#1a1a2e' },
-  avatarText: { fontSize: 26 },
+  avatarText: { fontSize: 20, fontWeight: '700' },
   onlineDot: {
     position: 'absolute',
     bottom: 2,

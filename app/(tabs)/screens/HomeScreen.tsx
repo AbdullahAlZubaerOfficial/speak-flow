@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Globe, Users, ThumbsUp, Heart, Laugh, Frown, Angry, AlertCircle, MessageCircle, Share2, Mail, BookmarkPlus, EyeOff, Flag, Send, Link, MoreHorizontal } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
@@ -94,50 +95,69 @@ const INITIAL_COMMENTS: Record<string, Comment[]> = {
 const INITIAL_POSTS: Post[] = [
     {
         id: '1', userId: '1', name: 'Anika Rahman', initials: 'AR',
-        avatarBg: '#E6F1FB', avatarCol: '#185FA5', time: '2 hours ago', audience: '🌍',
-        text: "Sometimes the best moments are the ones you don't plan. Wandered into this spot by accident and now I never want to leave. ✨",
+        avatarBg: '#E6F1FB', avatarCol: '#185FA5', time: '2 hours ago', audience: 'public',
+        text: "Sometimes the best moments are the ones you don't plan. Wandered into this spot by accident and now I never want to leave.",
         image: 'https://picsum.photos/id/1015/600/400',
-        reactions: { '👍': 80, '❤️': 35, '😮': 13 }, shares: 18, userReaction: null,
+        reactions: { 'like': 80, 'love': 35, 'wow': 13 }, shares: 18, userReaction: null,
     },
     {
         id: '2', userId: '2', name: 'Mehedi Hasan', initials: 'MH',
-        avatarBg: '#E1F5EE', avatarCol: '#0F6E56', time: '5 hours ago', audience: '👥',
-        text: 'Just shipped the biggest feature of my career. Three months of sleepless nights — totally worth it. If you believe in something, keep building. 🚀',
-        image: null, reactions: { '❤️': 200, '👍': 141 }, shares: 54, userReaction: '❤️',
+        avatarBg: '#E1F5EE', avatarCol: '#0F6E56', time: '5 hours ago', audience: 'friends',
+        text: 'Just shipped the biggest feature of my career. Three months of sleepless nights — totally worth it. If you believe in something, keep building.',
+        image: null, reactions: { 'love': 200, 'like': 141 }, shares: 54, userReaction: 'love',
     },
     {
         id: '3', userId: '3', name: 'Tasnim Islam', initials: 'TI',
-        avatarBg: '#FBEAF0', avatarCol: '#993556', time: 'Yesterday', audience: '🌍',
-        text: 'Dhaka at golden hour hits differently. 🌅',
+        avatarBg: '#FBEAF0', avatarCol: '#993556', time: 'Yesterday', audience: 'public',
+        text: 'Dhaka at golden hour hits differently.',
         image: 'https://picsum.photos/id/1040/600/400',
-        reactions: { '😮': 300, '❤️': 212 }, shares: 77, userReaction: null,
+        reactions: { 'wow': 300, 'love': 212 }, shares: 77, userReaction: null,
     },
     {
         id: '4', userId: '3', name: 'Tasnim Islam', initials: 'TI',
-        avatarBg: '#FBEAF0', avatarCol: '#993556', time: '2 days ago', audience: '🌍',
-        text: "Working on a new piece for the exhibition next month. Can't wait to share the final result! 🎨✨",
+        avatarBg: '#FBEAF0', avatarCol: '#993556', time: '2 days ago', audience: 'public',
+        text: "Working on a new piece for the exhibition next month. Can't wait to share the final result!",
         image: 'https://picsum.photos/id/30/600/400',
-        reactions: { '❤️': 95, '👍': 42, '😮': 18 }, shares: 12, userReaction: null,
+        reactions: { 'love': 95, 'like': 42, 'wow': 18 }, shares: 12, userReaction: null,
     },
     {
         id: '5', userId: '4', name: 'Sabbir Ahmed', initials: 'SA',
-        avatarBg: '#EAF3DE', avatarCol: '#3B6D11', time: '3 days ago', audience: '🌍',
-        text: 'Best biryani in town! Anyone wants to join next food adventure? 🍛😋',
+        avatarBg: '#EAF3DE', avatarCol: '#3B6D11', time: '3 days ago', audience: 'public',
+        text: 'Best biryani in town! Anyone wants to join next food adventure?',
         image: 'https://picsum.photos/id/127/600/400',
-        reactions: { '😂': 56, '👍': 34, '❤️': 12 }, shares: 8, userReaction: null,
+        reactions: { 'haha': 56, 'like': 34, 'love': 12 }, shares: 8, userReaction: null,
     },
 ];
 
-const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '😡'];
+const REACTIONS = ['like', 'love', 'haha', 'wow', 'sad', 'angry'];
 const REACTION_LABELS: Record<string, string> = {
-    '👍': 'Like', '❤️': 'Love', '😂': 'Haha', '😮': 'Wow', '😢': 'Sad', '😡': 'Angry',
+    'like': 'Like', 'love': 'Love', 'haha': 'Haha', 'wow': 'Wow', 'sad': 'Sad', 'angry': 'Angry',
+};
+const REACTION_COLORS: Record<string, string> = {
+    'like': '#1877F2', 'love': '#F33E58', 'haha': '#F7B928', 'wow': '#F7B928', 'sad': '#F7B928', 'angry': '#E9710F',
+};
+const ReactionIcon = ({ reaction, size = 20, color }: { reaction: string; size?: number; color?: string }) => {
+    const col = color ?? REACTION_COLORS[reaction] ?? '#65676B';
+    switch (reaction) {
+        case 'like':  return <ThumbsUp size={size} color={col} />;
+        case 'love':  return <Heart size={size} color={col} />;
+        case 'haha':  return <Laugh size={size} color={col} />;
+        case 'wow':   return <AlertCircle size={size} color={col} />;
+        case 'sad':   return <Frown size={size} color={col} />;
+        case 'angry': return <Angry size={size} color={col} />;
+        default:      return <ThumbsUp size={size} color={col} />;
+    }
+};
+const AudienceIcon = ({ audience }: { audience: string }) => {
+    if (audience === 'friends') return <Users size={12} color="#65676B" />;
+    return <Globe size={12} color="#65676B" />;
 };
 
 // ─── Types ──────────────────────────────────────────────
 type Comment = { id: string; name: string; initials: string; bg: string; col: string; text: string; time: string };
 type Post = {
     id: string; userId: string; name: string; initials: string; avatarBg: string; avatarCol: string;
-    time: string; audience: string; text: string; image: string | null;
+    time: string; audience: 'public' | 'friends'; text: string; image: string | null;
     reactions: Record<string, number>; shares: number; userReaction: string | null;
 };
 type UserProfile = {
@@ -287,7 +307,7 @@ const ReactionPicker = ({ visible, onSelect, onClose }: {
             <View style={s.reactPicker}>
                 {REACTIONS.map((r) => (
                     <TouchableOpacity key={r} onPress={() => onSelect(r)} style={s.reactOpt}>
-                        <Text style={{ fontSize: 28 }}>{r}</Text>
+                        <ReactionIcon reaction={r} size={28} />
                     </TouchableOpacity>
                 ))}
             </View>
@@ -419,11 +439,16 @@ const CommentSheet = ({
 
 // ─── Share Sheet ─────────────────────────────────────────
 const ShareSheet = ({ visible, onClose }: { visible: boolean; onClose: () => void }) => {
-    const SHARE_OPTIONS = [
-        { icon: '📨', label: 'Message' }, { icon: '📖', label: 'Story' },
-        { icon: '📋', label: 'Feed' }, { icon: '🔗', label: 'Copy link' },
-        { icon: '✉️', label: 'Email' }, { icon: '💾', label: 'Save' },
-        { icon: '🚫', label: 'Report' }, { icon: '⋯', label: 'More' },
+    type ShareOpt = { Icon: React.ComponentType<{ size: number; color: string }>; color: string; label: string };
+    const SHARE_OPTIONS: ShareOpt[] = [
+        { Icon: Send,         color: '#1877F2', label: 'Message' },
+        { Icon: BookmarkPlus, color: '#E1306C', label: 'Save' },
+        { Icon: Link,         color: '#6B4EFF', label: 'Copy link' },
+        { Icon: Mail,         color: '#00C853', label: 'Email' },
+        { Icon: EyeOff,       color: '#FF9500', label: 'Hide' },
+        { Icon: Flag,         color: '#FF3B30', label: 'Report' },
+        { Icon: Share2,       color: '#5856D6', label: 'Share' },
+        { Icon: MoreHorizontal, color: '#65676B', label: 'More' },
     ];
     return (
         <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -434,7 +459,9 @@ const ShareSheet = ({ visible, onClose }: { visible: boolean; onClose: () => voi
                 <View style={s.shareGrid}>
                     {SHARE_OPTIONS.map((opt) => (
                         <TouchableOpacity key={opt.label} style={s.shareItem} onPress={onClose}>
-                            <View style={s.shareIcon}><Text style={{ fontSize: 24 }}>{opt.icon}</Text></View>
+                            <View style={[s.shareIcon, { backgroundColor: opt.color + '18' }]}>
+                                <opt.Icon size={24} color={opt.color} />
+                            </View>
                             <Text style={s.shareLabel}>{opt.label}</Text>
                         </TouchableOpacity>
                     ))}
@@ -596,20 +623,24 @@ const UserProfileScreen = ({
                                     <Text style={s.profilePostText}>{post.text}</Text>
                                     {post.image && <Image source={{ uri: post.image }} style={s.profilePostImage} />}
                                     <View style={s.profilePostStats}>
-                                        <Text style={s.profilePostStatText}>
-                                            {Object.keys(post.reactions).slice(0, 3).join('')} {totalReactions}
-                                        </Text>
-                                        <TouchableOpacity onPress={() => onOpenComments(post.id)}>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                            {Object.keys(post.reactions).slice(0, 3).map(r => (
+                                                <ReactionIcon key={r} reaction={r} size={16} />
+                                            ))}
+                                            <Text style={s.profilePostStatText}> {totalReactions}</Text>
+                                        </View>
+                                        <TouchableOpacity onPress={() => onOpenComments(post.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                            <MessageCircle size={15} color="#1877F2" />
                                             <Text style={[s.profilePostStatText, { color: '#1877F2' }]}>
-                                                💬 {commentCount} comment{commentCount !== 1 ? 's' : ''}
+                                                {commentCount} comment{commentCount !== 1 ? 's' : ''}
                                             </Text>
                                         </TouchableOpacity>
                                     </View>
                                     <View style={[s.divider, { marginHorizontal: 0, marginTop: 8 }]} />
                                     <View style={s.actionsRow}>
-                                        <TouchableOpacity style={s.actionBtn} onPress={() => onReact(post.id, '👍')}>
-                                            <Text style={{ fontSize: 18 }}>{post.userReaction ?? '👍'}</Text>
-                                            <Text style={[s.actionLabel, post.userReaction ? { color: '#1877F2' } : {}]}>
+                                        <TouchableOpacity style={s.actionBtn} onPress={() => onReact(post.id, 'like')}>
+                                            <ReactionIcon reaction={post.userReaction ?? 'like'} size={20} color={post.userReaction ? undefined : '#65676B'} />
+                                            <Text style={[s.actionLabel, post.userReaction ? { color: REACTION_COLORS[post.userReaction] } : {}]}>
                                                 {post.userReaction ? REACTION_LABELS[post.userReaction] : 'Like'}
                                             </Text>
                                         </TouchableOpacity>
@@ -758,7 +789,8 @@ const PostCard = ({
                 <View style={{ flex: 1 }}>
                     <Text style={s.postName}>{post.name}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                        <Text style={s.postTime}>{post.time} · {post.audience}</Text>
+                        <Text style={s.postTime}>{post.time} · </Text>
+                        <AudienceIcon audience={post.audience} />
                         {isActive && <Text style={{ fontSize: 11, color: '#31A24C', fontWeight: '600' }}>· Active</Text>}
                     </View>
                 </View>
@@ -776,7 +808,7 @@ const PostCard = ({
 
             <View style={s.statsRow}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text>{topReactions.join('')}</Text>
+                    {topReactions.map(r => <ReactionIcon key={r} reaction={r} size={16} />)}
                     <Text style={s.statsText}>{totalReactions}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -791,8 +823,8 @@ const PostCard = ({
 
             <View style={s.actionsRow}>
                 <TouchableOpacity style={s.actionBtn} onPress={() => setShowPicker(true)} onLongPress={() => setShowPicker(true)}>
-                    <Text style={{ fontSize: 18 }}>{post.userReaction ?? '👍'}</Text>
-                    <Text style={[s.actionLabel, post.userReaction ? { color: '#1877F2' } : {}]}>
+                    <ReactionIcon reaction={post.userReaction ?? 'like'} size={20} color={post.userReaction ? undefined : '#65676B'} />
+                    <Text style={[s.actionLabel, post.userReaction ? { color: REACTION_COLORS[post.userReaction] } : {}]}>
                         {post.userReaction ? REACTION_LABELS[post.userReaction] : 'Like'}
                     </Text>
                 </TouchableOpacity>

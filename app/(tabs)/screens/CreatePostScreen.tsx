@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet,
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
+import { Globe } from 'lucide-react-native';
 
 const CreatePostScreen = () => {
   const router = useRouter();
@@ -43,7 +44,8 @@ const CreatePostScreen = () => {
         <View>
           <Text style={styles.name}>আবদুল্লাহ আল যুবায়ের</Text>
           <TouchableOpacity style={styles.publicBtn}>
-            <Text>🌍 Public ▼</Text>
+            <Globe size={14} color="#65676B" style={{ marginRight: 4 }} />
+            <Text>Public ▼</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -102,7 +104,7 @@ const styles = StyleSheet.create({
   userInfo: { flexDirection: 'row', alignItems: 'center', padding: 15 },
   avatar: { width: 50, height: 50, borderRadius: 25, marginRight: 12 },
   name: { fontSize: 18, fontWeight: '600' },
-  publicBtn: { backgroundColor: '#f0f0f0', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginTop: 4, alignSelf: 'flex-start' },
+  publicBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f0f0', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginTop: 4, alignSelf: 'flex-start' },
   input: { fontSize: 22, padding: 15, minHeight: 150, textAlignVertical: 'top' },
   bgOptions: { flexDirection: 'row', padding: 10 },
   colorBox: { width: 50, height: 50, borderRadius: 8, marginRight: 8 },

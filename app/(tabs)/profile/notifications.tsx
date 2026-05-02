@@ -26,6 +26,9 @@ type Notification = {
   avatar?: string;
   image?: string;
   username?: string;
+  initials?: string;
+  avatarBg?: string;
+  avatarCol?: string;
 };
 
 const getIcon = (type: string) => {
@@ -90,9 +93,9 @@ const NotificationItem = ({
         activeOpacity={0.8}
       >
         <View style={styles.leftSection}>
-          {item.avatar ? (
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{item.avatar}</Text>
+          {item.initials ? (
+            <View style={[styles.avatar, { backgroundColor: item.avatarBg || '#F0F0F0' }]}>
+              <Text style={[styles.avatarText, { color: item.avatarCol || '#333' }]}>{item.initials}</Text>
             </View>
           ) : (
             <View style={[styles.iconCircle, { backgroundColor: getIconColor(item.type) + '15' }]}>
@@ -143,7 +146,9 @@ const NotificationsScreen = () => {
       message: 'Hey! Are we still meeting tomorrow?',
       time: '2m ago',
       read: false,
-      avatar: '👩🏻',
+      initials: 'SJ',
+      avatarBg: '#E6F1FB',
+      avatarCol: '#185FA5',
     },
     {
       id: '2',
@@ -152,7 +157,9 @@ const NotificationsScreen = () => {
       message: 'Your sunset photo got 12 likes',
       time: '15m ago',
       read: false,
-      avatar: '🧔🏻',
+      initials: 'MC',
+      avatarBg: '#E1F5EE',
+      avatarCol: '#0F6E56',
       image: 'https://picsum.photos/seed/sunset/200',
     },
     {
@@ -162,7 +169,9 @@ const NotificationsScreen = () => {
       message: 'Say hi to your new follower!',
       time: '1h ago',
       read: true,
-      avatar: '👩🏾',
+      initials: 'AR',
+      avatarBg: '#FBEAF0',
+      avatarCol: '#993556',
     },
     {
       id: '4',
@@ -171,7 +180,9 @@ const NotificationsScreen = () => {
       message: '@you What do you think about this design?',
       time: '3h ago',
       read: true,
-      avatar: '👨🏻',
+      initials: 'DP',
+      avatarBg: '#EAF3DE',
+      avatarCol: '#3B6D11',
     },
     {
       id: '5',
@@ -188,7 +199,9 @@ const NotificationsScreen = () => {
       message: '"This is amazing!"',
       time: 'Yesterday',
       read: true,
-      avatar: '👩🏽',
+      initials: 'ER',
+      avatarBg: '#F3E5F5',
+      avatarCol: '#6A1B9A',
     },
   ]);
 
@@ -450,7 +463,8 @@ const styles = StyleSheet.create({
     marginRight: 14,
   },
   avatarText: {
-    fontSize: 26,
+    fontSize: 18,
+    fontWeight: '700',
   },
   iconCircle: {
     width: 52,

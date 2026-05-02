@@ -6,21 +6,22 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { GraduationCap, MessageSquare, Briefcase, FileText, Mic2, Trophy, BookOpen, HardHat, BookMarked, Eye, Target, Pin, CheckCircle2, PartyPopper, Lock } from 'lucide-react-native';
 
 const tabs = ['Videos', 'Courses', 'Books', 'Vocab'] as const;
 type TabType = typeof tabs[number];
 
 // ─── VIDEO CONTENT ───────────────────────────────────────────────────────────
 const videoContent = [
-  { id: '1', title: 'Master Present Perfect Tense', channel: 'English Academy', duration: '12:45', views: '125K', icon: '🎓', color: ['#6B4EFF','#A45EFF'] as [string,string], likes: 4800, comments: [
-    { id:'c1', user:'Sarah M.', avatar:'👩', text:'This helped me so much!', time:'2h ago' },
-    { id:'c2', user:'Ali K.', avatar:'🧔', text:'Great explanation, thank you!', time:'5h ago' },
+  { id: '1', title: 'Master Present Perfect Tense', channel: 'English Academy', duration: '12:45', views: '125K', Icon: GraduationCap, color: ['#6B4EFF','#A45EFF'] as [string,string], likes: 4800, comments: [
+    { id:'c1', user:'Sarah M.', initials:'SM', bg:'#E6F1FB', col:'#185FA5', text:'This helped me so much!', time:'2h ago' },
+    { id:'c2', user:'Ali K.', initials:'AK', bg:'#E1F5EE', col:'#0F6E56', text:'Great explanation, thank you!', time:'5h ago' },
   ]},
-  { id: '2', title: 'Common English Phrases for Daily Life', channel: 'Speak Fluently', duration: '8:30', views: '89K', icon: '💬', color: ['#E1306C','#F77737'] as [string,string], likes: 3200, comments: [
-    { id:'c1', user:'Maria L.', avatar:'👩‍🦱', text:'Amazing content!', time:'1h ago' },
+  { id: '2', title: 'Common English Phrases for Daily Life', channel: 'Speak Fluently', duration: '8:30', views: '89K', Icon: MessageSquare, color: ['#E1306C','#F77737'] as [string,string], likes: 3200, comments: [
+    { id:'c1', user:'Maria L.', initials:'ML', bg:'#FBEAF0', col:'#993556', text:'Amazing content!', time:'1h ago' },
   ]},
-  { id: '3', title: 'Business English Essentials', channel: 'Pro English', duration: '15:20', views: '210K', icon: '💼', color: ['#00C853','#00E676'] as [string,string], likes: 9100, comments: [
-    { id:'c1', user:'John D.', avatar:'🧑', text:'Very professional, loved it!', time:'3h ago' },
+  { id: '3', title: 'Business English Essentials', channel: 'Pro English', duration: '15:20', views: '210K', Icon: Briefcase, color: ['#00C853','#00E676'] as [string,string], likes: 9100, comments: [
+    { id:'c1', user:'John D.', initials:'JD', bg:'#EAF3DE', col:'#3B6D11', text:'Very professional, loved it!', time:'3h ago' },
   ]},
 ];
 
@@ -35,7 +36,7 @@ const coursesContent = [
     duration: '4h 30m',
     rating: 4.9,
     students: '32K',
-    icon: '📝',
+    Icon: FileText,
     color: ['#4F46E5', '#818CF8'] as [string,string],
     badge: 'Best Seller',
     badgeColor: '#F59E0B',
@@ -58,7 +59,7 @@ const coursesContent = [
     duration: '3h 15m',
     rating: 4.8,
     students: '21K',
-    icon: '🗣️',
+    Icon: Mic2,
     color: ['#DB2777', '#F472B6'] as [string,string],
     badge: 'Trending',
     badgeColor: '#EF4444',
@@ -80,7 +81,7 @@ const coursesContent = [
     duration: '5h 10m',
     rating: 4.7,
     students: '18K',
-    icon: '💼',
+    Icon: Briefcase,
     color: ['#047857', '#34D399'] as [string,string],
     badge: 'New',
     badgeColor: '#10B981',
@@ -103,7 +104,7 @@ const coursesContent = [
     duration: '6h 00m',
     rating: 4.9,
     students: '45K',
-    icon: '🏆',
+    Icon: Trophy,
     color: ['#B45309', '#FCD34D'] as [string,string],
     badge: 'Popular',
     badgeColor: '#8B5CF6',
@@ -121,13 +122,13 @@ const coursesContent = [
 
 // ─── BOOKS ───────────────────────────────────────────────────────────────────
 const booksContent = [
-  { id:'1', title:'Pride and Prejudice', author:'Jane Austen', pages:432, category:'Classic', icon:'📖', color:'#E1306C',
+  { id:'1', title:'Pride and Prejudice', author:'Jane Austen', pages:432, category:'Classic', Icon:BookOpen, color:'#E1306C',
     content:`Chapter 1\n\nIt is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife.\n\nHowever little known the feelings or views of such a man may be on his first entering a neighbourhood, this truth is so well fixed in the minds of the surrounding families, that he is considered as the rightful property of some one or other of their daughters.\n\n"My dear Mr. Bennet," said his lady to him one day, "have you heard that Netherfield Park is let at last?"\n\nMr. Bennet replied that he had not.\n\n"But it is," returned she; "for Mrs. Long has just been here, and she told me all about it."\n\nMr. Bennet made no answer.\n\n"Do not you want to know who has taken it?" cried his wife impatiently.\n\n"You want to tell me, and I have no objection to hearing it."\n\nThis was invitation enough.`},
-  { id:'2', title:'The Great Gatsby', author:'F. Scott Fitzgerald', pages:180, category:'Classic', icon:'🎩', color:'#6B4EFF',
+  { id:'2', title:'The Great Gatsby', author:'F. Scott Fitzgerald', pages:180, category:'Classic', Icon:HardHat, color:'#6B4EFF',
     content:`Chapter 1\n\nIn my younger and more vulnerable years my father gave me some advice that I've been turning over in my mind ever since.\n\n"Whenever you feel like criticizing anyone," he told me, "just remember that all the people in this world haven't had the advantages that you've had."\n\nHe didn't say any more, but we've always been unusually communicative in a reserved way, and I understood that he meant a great deal more than that.\n\nIn consequence, I'm inclined to reserve all judgments, a habit that has opened up many curious natures to me and also made me the victim of not a few veteran bores.`},
-  { id:'3', title:'English Grammar Guide', author:'Robert Smith', pages:256, category:'Educational', icon:'📚', color:'#FF9500',
+  { id:'3', title:'English Grammar Guide', author:'Robert Smith', pages:256, category:'Educational', Icon:BookMarked, color:'#FF9500',
     content:`Introduction to English Grammar\n\nGrammar is the system of rules that governs the use of a language. Understanding grammar helps you communicate more clearly and effectively.\n\nParts of Speech\n\nEvery word in English belongs to one of eight parts of speech:\n\n1. Noun - a person, place, thing, or idea\n   Example: "The dog barked loudly."\n\n2. Verb - an action or state of being\n   Example: "She runs every morning."\n\n3. Adjective - describes a noun\n   Example: "The beautiful sunset amazed everyone."\n\n4. Adverb - modifies a verb, adjective, or another adverb\n   Example: "He spoke very quickly."\n\n5. Pronoun - replaces a noun\n   Example: "He gave it to her."\n\n6. Preposition - shows relationship\n   Example: "The book is on the table."`},
-  { id:'4', title:'Business English', author:'Emma Wilson', pages:198, category:'Business', icon:'💼', color:'#00C853',
+  { id:'4', title:'Business English', author:'Emma Wilson', pages:198, category:'Business', Icon:Briefcase, color:'#00C853',
     content:`Chapter 1: Professional Communication\n\nEffective business communication is the backbone of every successful organization. Whether you are writing an email, presenting in a meeting, or negotiating a deal, your ability to communicate clearly in English is crucial.\n\nKey Principles:\n\n1. Clarity - Be direct and avoid unnecessary complexity\n   "Please send the report by Friday." ✓\n   "I was wondering if perhaps you might be able to send the report sometime before or on Friday." ✗\n\n2. Conciseness - Respect the reader's time\n   Use bullet points and short paragraphs.\n\n3. Professional Tone - Stay formal but friendly\n   "Dear Mr. Smith, I hope this email finds you well..."`},
 ];
 
@@ -154,7 +155,7 @@ export default function LearnEnglishApp() {
   const [playing, setPlaying] = useState(false);
   const [liked, setLiked] = useState(false);
   const [commentText, setCommentText] = useState('');
-  const [comments, setComments] = useState<{id:string;user:string;avatar:string;text:string;time:string}[]>([]);
+  const [comments, setComments] = useState<{id:string;user:string;initials:string;bg:string;col:string;text:string;time:string}[]>([]);
 
   // Courses
   const [selectedCourse, setSelectedCourse] = useState<typeof coursesContent[0] | null>(null);
@@ -179,7 +180,7 @@ export default function LearnEnglishApp() {
 
   const sendComment = () => {
     if (!commentText.trim()) return;
-    setComments(prev => [{ id: Date.now().toString(), user:'You', avatar:'😊', text: commentText.trim(), time:'Just now' }, ...prev]);
+    setComments(prev => [{ id: Date.now().toString(), user:'You', initials:'Y', bg:'#E6F1FB', col:'#185FA5', text: commentText.trim(), time:'Just now' }, ...prev]);
     setCommentText('');
   };
 
@@ -192,7 +193,7 @@ export default function LearnEnglishApp() {
 
   const openLesson = (lesson: typeof coursesContent[0]['lessons'][0]) => {
     if (lesson.locked) {
-      Alert.alert('Locked 🔒', 'Complete previous lessons to unlock this one!');
+      Alert.alert('Locked', 'Complete previous lessons to unlock this one!');
       return;
     }
     setSelectedLesson(lesson);
@@ -248,7 +249,7 @@ export default function LearnEnglishApp() {
           renderItem={({ item }) => (
             <TouchableOpacity style={s.videoCard} activeOpacity={0.9} onPress={() => openVideo(item)}>
               <LinearGradient colors={item.color} style={s.videoThumb}>
-                <Text style={{ fontSize:60 }}>{item.icon}</Text>
+                <item.Icon size={60} color="#fff" strokeWidth={1.5} />
                 <View style={s.playBtn}><Icon name="play" size={22} color="#fff" /></View>
                 <View style={s.durationBadge}><Text style={s.durationTxt}>{item.duration}</Text></View>
               </LinearGradient>
@@ -256,7 +257,10 @@ export default function LearnEnglishApp() {
                 <Text style={s.videoTitle}>{item.title}</Text>
                 <View style={{ flexDirection:'row', justifyContent:'space-between', marginTop:6 }}>
                   <Text style={s.videoMeta}>{item.channel}</Text>
-                  <Text style={s.videoMeta}>👁 {item.views} views</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Eye size={12} color="#888" style={{ marginRight: 4 }} />
+                    <Text style={s.videoMeta}>{item.views} views</Text>
+                  </View>
                 </View>
               </View>
             </TouchableOpacity>
@@ -273,7 +277,10 @@ export default function LearnEnglishApp() {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View style={s.coursesHeader}>
-              <Text style={s.coursesHeaderTitle}>🎯 Pick Your Path</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 3 }}>
+                <Target size={20} color="#1C1C1E" style={{ marginRight: 6 }} />
+                <Text style={s.coursesHeaderTitle}>Pick Your Path</Text>
+              </View>
               <Text style={s.coursesHeaderSub}>Structured lessons, real progress</Text>
             </View>
           }
@@ -284,7 +291,7 @@ export default function LearnEnglishApp() {
               <TouchableOpacity style={s.courseCard} activeOpacity={0.88} onPress={() => setSelectedCourse(item)}>
                 {/* Gradient Banner */}
                 <LinearGradient colors={item.color} style={s.courseBanner}>
-                  <Text style={{ fontSize:44 }}>{item.icon}</Text>
+                  <item.Icon size={44} color="#fff" />
                   <View style={[s.courseBadge, { backgroundColor: item.badgeColor }]}>
                     <Text style={s.courseBadgeTxt}>{item.badge}</Text>
                   </View>
@@ -299,7 +306,10 @@ export default function LearnEnglishApp() {
                     <View style={[s.levelPill, { backgroundColor: levelColor[item.level] + '20' }]}>
                       <Text style={[s.levelTxt, { color: levelColor[item.level] }]}>{item.level}</Text>
                     </View>
-                    <Text style={s.courseMetaTxt}>👨‍🏫 {item.instructor}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <GraduationCap size={14} color="#666" style={{ marginRight: 4 }} />
+                      <Text style={s.courseMetaTxt}>{item.instructor}</Text>
+                    </View>
                   </View>
 
                   <Text style={s.courseTitle}>{item.title}</Text>
@@ -361,7 +371,7 @@ export default function LearnEnglishApp() {
           renderItem={({ item }) => (
             <TouchableOpacity style={s.bookCard} activeOpacity={0.9} onPress={() => setSelectedBook(item)}>
               <View style={[s.bookCover, { backgroundColor: item.color + '20' }]}>
-                <Text style={{ fontSize:36 }}>{item.icon}</Text>
+                <item.Icon size={36} color={item.color} />
               </View>
               <View style={{ flex:1 }}>
                 <Text style={s.bookTitle}>{item.title}</Text>
@@ -416,7 +426,7 @@ export default function LearnEnglishApp() {
               <TouchableOpacity style={s.heroBack} onPress={() => setSelectedCourse(null)}>
                 <Icon name="arrow-back" size={22} color="#fff" />
               </TouchableOpacity>
-              <Text style={{ fontSize:56, marginTop:10 }}>{selectedCourse.icon}</Text>
+              <selectedCourse.Icon size={56} color="#fff" style={{ marginTop: 10 }} />
               <View style={[s.courseBadge, { backgroundColor: selectedCourse.badgeColor, alignSelf:'center', marginTop:8 }]}>
                 <Text style={s.courseBadgeTxt}>{selectedCourse.badge}</Text>
               </View>
@@ -450,8 +460,8 @@ export default function LearnEnglishApp() {
 
               {/* Instructor */}
               <View style={s.instructorRow}>
-                <View style={s.instructorAvatar}>
-                  <Text style={{ fontSize:22 }}>👨‍🏫</Text>
+                <View style={[s.instructorAvatar, { backgroundColor: selectedCourse.color[0] + '20' }]}>
+                  <GraduationCap size={24} color={selectedCourse.color[0]} />
                 </View>
                 <View>
                   <Text style={s.instructorName}>{selectedCourse.instructor}</Text>
@@ -482,7 +492,10 @@ export default function LearnEnglishApp() {
               })()}
 
               {/* Lessons List */}
-              <Text style={s.lessonsHeading}>📚 Course Lessons</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 24, paddingBottom: 12 }}>
+                <BookOpen size={18} color="#1C1C1E" style={{ marginRight: 6 }} />
+                <Text style={[s.lessonsHeading, { paddingHorizontal: 0, paddingTop: 0, paddingBottom: 0 }]}>Course Lessons</Text>
+              </View>
 
               {selectedCourse.lessons.map((lesson, idx) => {
                 const isCompleted = completedLessons.has(lesson.id);
@@ -503,7 +516,7 @@ export default function LearnEnglishApp() {
                       {isCompleted
                         ? <Icon name="checkmark" size={16} color="#fff" />
                         : isLocked
-                          ? <Icon name="lock-closed" size={14} color="#9CA3AF" />
+                          ? <Lock size={14} color="#9CA3AF" />
                           : <Text style={[s.lessonNum, { color: selectedCourse.color[0] }]}>{idx + 1}</Text>
                       }
                     </View>
@@ -541,7 +554,7 @@ export default function LearnEnglishApp() {
 
             {/* Video Player Area */}
             <LinearGradient colors={selectedCourse.color} style={s.lessonPlayer}>
-              <Text style={{ fontSize:64 }}>{selectedCourse.icon}</Text>
+              <selectedCourse.Icon size={64} color="#fff" />
               <TouchableOpacity style={s.bigPlayBtn} onPress={() => setPlayingLesson(p => !p)}>
                 <Icon name={playingLesson ? 'pause' : 'play'} size={34} color="#fff" />
               </TouchableOpacity>
@@ -585,7 +598,10 @@ export default function LearnEnglishApp() {
 
                 {/* About this lesson */}
                 <View style={s.lessonAboutBox}>
-                  <Text style={s.lessonAboutTitle}>📌 About This Lesson</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                    <Pin size={16} color="#1C1C1E" style={{ marginRight: 6 }} />
+                    <Text style={[s.lessonAboutTitle, { marginBottom: 0 }]}>About This Lesson</Text>
+                  </View>
                   <Text style={s.lessonAboutTxt}>
                     In this video tutorial, you will explore "{selectedLesson.title}" in depth. Follow along with the instructor's clear, step-by-step explanation. Pause and replay any section to reinforce your understanding. Take notes on key concepts and practice the examples provided.
                   </Text>
@@ -593,7 +609,10 @@ export default function LearnEnglishApp() {
 
                 {/* What you'll learn */}
                 <View style={s.lessonLearnBox}>
-                  <Text style={s.lessonAboutTitle}>✅ What You'll Learn</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                    <CheckCircle2 size={16} color="#1C1C1E" style={{ marginRight: 6 }} />
+                    <Text style={[s.lessonAboutTitle, { marginBottom: 0 }]}>What You'll Learn</Text>
+                  </View>
                   {[
                     'Core concepts explained clearly',
                     'Real-world examples and usage',
@@ -619,8 +638,8 @@ export default function LearnEnglishApp() {
               ) : (
                 <View style={s.completeBtnWrap}>
                   <View style={[s.completeBtn, { backgroundColor:'#10B981', flexDirection:'row', alignItems:'center', justifyContent:'center', gap:8 }]}>
-                    <Icon name="checkmark-circle" size={22} color="#fff" />
-                    <Text style={s.completeBtnTxt}>Lesson Completed 🎉</Text>
+                    <PartyPopper size={22} color="#fff" />
+                    <Text style={s.completeBtnTxt}>Lesson Completed</Text>
                   </View>
                 </View>
               )}
@@ -636,7 +655,7 @@ export default function LearnEnglishApp() {
           {selectedVideo && (
             <>
               <LinearGradient colors={selectedVideo.color} style={s.player}>
-                <Text style={{ fontSize:70 }}>{selectedVideo.icon}</Text>
+                <selectedVideo.Icon size={70} color="#fff" strokeWidth={1.5} />
                 <TouchableOpacity style={s.bigPlayBtn} onPress={() => setPlaying(p => !p)}>
                   <Icon name={playing ? 'pause' : 'play'} size={36} color="#fff" />
                 </TouchableOpacity>
@@ -648,7 +667,11 @@ export default function LearnEnglishApp() {
               <View style={{ flex:1, backgroundColor:'#fff', borderTopLeftRadius:24, borderTopRightRadius:24, marginTop:-16 }}>
                 <View style={{ padding:20, borderBottomWidth:1, borderBottomColor:'#F0F0F0' }}>
                   <Text style={{ fontSize:18, fontWeight:'700', color:'#1C1C1E', marginBottom:4 }}>{selectedVideo.title}</Text>
-                  <Text style={{ color:'#888' }}>{selectedVideo.channel} • 👁 {selectedVideo.views} views</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ color:'#888' }}>{selectedVideo.channel} • </Text>
+                    <Eye size={12} color="#888" style={{ marginRight: 4 }} />
+                    <Text style={{ color:'#888' }}>{selectedVideo.views} views</Text>
+                  </View>
                   <View style={{ flexDirection:'row', marginTop:14, gap:16 }}>
                     <TouchableOpacity style={[s.actionBtn, liked && { backgroundColor:'#6B4EFF20' }]} onPress={() => setLiked(p => !p)}>
                       <Icon name={liked ? 'heart' : 'heart-outline'} size={20} color={liked ? '#6B4EFF' : '#555'} />
@@ -671,7 +694,9 @@ export default function LearnEnglishApp() {
                   contentContainerStyle={{ paddingHorizontal:20, paddingBottom:16 }}
                   renderItem={({ item:c }) => (
                     <View style={s.commentRow}>
-                      <Text style={s.commentAvatar}>{c.avatar}</Text>
+                      <View style={[s.commentAvatarCircle, { backgroundColor: c.bg }]}>
+                        <Text style={[s.commentAvatarInitials, { color: c.col }]}>{c.initials}</Text>
+                      </View>
                       <View style={s.commentBubble}>
                         <Text style={s.commentUser}>{c.user} <Text style={s.commentTime}>{c.time}</Text></Text>
                         <Text style={s.commentText}>{c.text}</Text>
@@ -709,7 +734,7 @@ export default function LearnEnglishApp() {
               <View style={{ width:38 }} />
             </View>
             <View style={[s.bookStrip, { backgroundColor: selectedBook.color }]}>
-              <Text style={{ fontSize:28 }}>{selectedBook.icon}</Text>
+              <selectedBook.Icon size={28} color="#fff" />
               <Text style={{ color:'#fff', fontWeight:'700', marginLeft:12, fontSize:15 }}>{selectedBook.category}</Text>
               <Text style={{ color:'rgba(255,255,255,0.8)', marginLeft:'auto', fontSize:13 }}>{selectedBook.pages} pages</Text>
             </View>
@@ -843,7 +868,8 @@ const s = StyleSheet.create({
   actionBtn:    { flexDirection:'row', alignItems:'center', gap:6, backgroundColor:'#F5F5F5', paddingHorizontal:16, paddingVertical:10, borderRadius:20 },
   actionTxt:    { fontSize:14, fontWeight:'600', color:'#555' },
   commentRow:   { flexDirection:'row', marginBottom:14, gap:10 },
-  commentAvatar:{ fontSize:28, marginTop:2 },
+  commentAvatarCircle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  commentAvatarInitials: { fontSize: 16, fontWeight: '700' },
   commentBubble:{ flex:1, backgroundColor:'#F5F5F5', borderRadius:14, padding:12 },
   commentUser:  { fontWeight:'700', fontSize:13, color:'#1C1C1E', marginBottom:4 },
   commentTime:  { fontWeight:'400', color:'#aaa', fontSize:12 },
