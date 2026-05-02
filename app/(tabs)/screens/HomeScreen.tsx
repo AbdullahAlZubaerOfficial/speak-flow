@@ -922,62 +922,10 @@ const HomeScreen = () => {
         );
     }
 
-    const STORIES = [
-        { id: 'add', isAdd: true },
-        ...Object.values(USERS_PROFILES).map((u) => ({
-            id: u.id, name: u.name, initials: u.initials,
-            avatarBg: u.avatarBg, avatarCol: u.avatarCol,
-            isActive: ACTIVE_USER_IDS.includes(u.id), isAdd: false,
-        })),
-    ];
-
-    const renderStory = ({ item }: { item: typeof STORIES[number] }) => {
-        if (item.isAdd) {
-            return (
-                <TouchableOpacity style={s.storyItem}>
-                    <View style={[s.storyRing, s.storyRingGray]}>
-                        <View style={s.storyInner}>
-                            <View style={[s.avatar, { backgroundColor: '#E4E6EB', width: 56, height: 56, borderRadius: 28 }]}>
-                                <Ionicons name="person-outline" size={26} color="#65676B" />
-                            </View>
-                        </View>
-                    </View>
-                    <View style={s.addDot}><Ionicons name="add" size={14} color="#fff" /></View>
-                    <Text style={s.storyLabel}>Add Story</Text>
-                </TouchableOpacity>
-            );
-        }
-        const story = item as { id: string; name: string; initials: string; avatarBg: string; avatarCol: string; isActive: boolean; isAdd: false };
-        return (
-            <TouchableOpacity style={s.storyItem} onPress={() => handleUserPress(story.id)}>
-                <View style={[s.storyRing, story.isActive ? s.storyRingActive : {}]}>
-                    <View style={s.storyInner}>
-                        <View style={[s.avatar, { backgroundColor: story.avatarBg, width: 56, height: 56, borderRadius: 28 }]}>
-                            <Text style={{ fontWeight: '700', fontSize: 18, color: story.avatarCol }}>{story.initials}</Text>
-                        </View>
-                    </View>
-                </View>
-                {story.isActive && <View style={s.activeDot} />}
-                <Text style={s.storyLabel} numberOfLines={1}>{story.name.split(' ')[0]}</Text>
-            </TouchableOpacity>
-        );
-    };
-
     const ListHeader = () => (
         <View>
-            {/* Stories */}
-            <View style={{ backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#E4E6EB', paddingVertical: 10 }}>
-                <FlatList
-                    data={STORIES}
-                    renderItem={renderStory}
-                    keyExtractor={(item) => item.id}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    contentContainerStyle={{ paddingHorizontal: 12, gap: 10 }}
-                />
-            </View>
             {/* Post composer shortcut */}
-            <View style={{ backgroundColor: '#fff', borderTopWidth: 0.5, borderTopColor: '#E4E6EB', marginTop: 8, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <View style={{ backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#E4E6EB', paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={[s.avatar, { backgroundColor: '#E6F1FB' }]}>
                     <Text style={{ fontWeight: '600', fontSize: 15, color: '#185FA5' }}>YO</Text>
                 </View>
@@ -1039,7 +987,7 @@ const HomeScreen = () => {
                 postId={activeCommentPost}
                 visible={commentSheetVisible}
                 onClose={handleCloseComments}
-                comments={activePostComments}
+                comments={activePostComments}       
                 onAddComment={handleAddComment}
             />
 
