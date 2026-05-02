@@ -27,13 +27,7 @@ const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 // ─── Data ───────────────────────────────────────────────
 const ACTIVE_USER_IDS = ['1', '3', '4'];
 
-const STORIES = [
-    { id: '0', name: 'My Profile', emoji: '🧑', isAdd: true, userId: null },
-    { id: '1', name: 'Anika', emoji: '🙋‍♀️', userId: '1' },
-    { id: '2', name: 'Rafi', emoji: '🧑‍💻', userId: '2' },
-    { id: '3', name: 'Tasnim', emoji: '👩‍🎨', userId: '3' },
-    { id: '4', name: 'Sabbir', emoji: '🧔', userId: '4' },
-];
+
 
 const USERS_PROFILES: Record<string, UserProfile> = {
     '1': {
@@ -281,47 +275,7 @@ const PostOptionsMenu = ({
     );
 };
 
-// ─── Story Bar ───────────────────────────────────────────
-const StoryBar = ({ onUserPress, onMyProfilePress }: {
-    onUserPress: (userId: string) => void;
-    onMyProfilePress: () => void;
-}) => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.storyBar}
-        contentContainerStyle={{ paddingHorizontal: 12, gap: 12 }}>
-        {STORIES.map((story) => {
-            const isActive = story.userId ? ACTIVE_USER_IDS.includes(story.userId) : false;
-            const handlePress = () => {
-                if (story.isAdd) {
-                    onMyProfilePress();
-                } else if (story.userId) {
-                    onUserPress(story.userId);
-                }
-            };
-            return (
-                <TouchableOpacity key={story.id} style={s.storyItem} onPress={handlePress}>
-                    <View style={[s.storyRing, story.isAdd && s.storyRingGray, isActive && s.storyRingActive]}>
-                        <View style={s.storyInner}>
-                            <Text style={{ fontSize: 26 }}>{story.emoji}</Text>
-                        </View>
-                    </View>
-                    {story.isAdd && (
-                        <View style={s.addDot}>
-                            <Ionicons name="person" size={12} color="#fff" />
-                        </View>
-                    )}
-                    {isActive && !story.isAdd && <View style={s.activeDot} />}
-                    <Text style={s.storyLabel} numberOfLines={1}>{story.name}</Text>
-                    {isActive && !story.isAdd && (
-                        <View style={s.activeLabel}>
-                            <View style={s.activeLabelDot} />
-                            <Text style={s.activeLabelText}>Active</Text>
-                        </View>
-                    )}
-                </TouchableOpacity>
-            );
-        })}
-    </ScrollView>
-);
+
 
 // ─── Reaction Picker ─────────────────────────────────────
 const ReactionPicker = ({ visible, onSelect, onClose }: {
@@ -968,6 +922,75 @@ const HomeScreen = () => {
         );
     }
 
+    const STORIES = [
+        { id: 'add', isAdd: true },
+        ...Object.values(USERS_PROFILES).map((u) => ({
+            id: u.id, name: u.name, initials: u.initials,
+            avatarBg: u.avatarBg, avatarCol: u.avatarCol,
+            isActive: ACTIVE_USER_IDS.includes(u.id), isAdd: false,
+        })),
+    ];
+
+    const renderStory = ({ item }: { item: typeof STORIES[number] }) => {
+        if (item.isAdd) {
+            return (
+                <TouchableOpacity style={s.storyItem}>
+                    <View style={[s.storyRing, s.storyRingGray]}>
+                        <View style={s.storyInner}>
+                            <View style={[s.avatar, { backgroundColor: '#E4E6EB', width: 56, height: 56, borderRadius: 28 }]}>
+                                <Ionicons name="person-outline" size={26} color="#65676B" />
+                            </View>
+                        </View>
+                    </View>
+                    <View style={s.addDot}><Ionicons name="add" size={14} color="#fff" /></View>
+                    <Text style={s.storyLabel}>Add Story</Text>
+                </TouchableOpacity>
+            );
+        }
+        const story = item as { id: string; name: string; initials: string; avatarBg: string; avatarCol: string; isActive: boolean; isAdd: false };
+        return (
+            <TouchableOpacity style={s.storyItem} onPress={() => handleUserPress(story.id)}>
+                <View style={[s.storyRing, story.isActive ? s.storyRingActive : {}]}>
+                    <View style={s.storyInner}>
+                        <View style={[s.avatar, { backgroundColor: story.avatarBg, width: 56, height: 56, borderRadius: 28 }]}>
+                            <Text style={{ fontWeight: '700', fontSize: 18, color: story.avatarCol }}>{story.initials}</Text>
+                        </View>
+                    </View>
+                </View>
+                {story.isActive && <View style={s.activeDot} />}
+                <Text style={s.storyLabel} numberOfLines={1}>{story.name.split(' ')[0]}</Text>
+            </TouchableOpacity>
+        );
+    };
+
+    const ListHeader = () => (
+        <View>
+            {/* Stories */}
+            <View style={{ backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#E4E6EB', paddingVertical: 10 }}>
+                <FlatList
+                    data={STORIES}
+                    renderItem={renderStory}
+                    keyExtractor={(item) => item.id}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingHorizontal: 12, gap: 10 }}
+                />
+            </View>
+            {/* Post composer shortcut */}
+            <View style={{ backgroundColor: '#fff', borderTopWidth: 0.5, borderTopColor: '#E4E6EB', marginTop: 8, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={[s.avatar, { backgroundColor: '#E6F1FB' }]}>
+                    <Text style={{ fontWeight: '600', fontSize: 15, color: '#185FA5' }}>YO</Text>
+                </View>
+                <TouchableOpacity
+                    style={{ flex: 1, backgroundColor: '#F0F2F5', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 }}
+                    onPress={() => router.push('/screens/CreatePostScreen')}
+                >
+                    <Text style={{ color: '#65676B', fontSize: 15 }}>What's on your mind?</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+    );
+
     return (
         <View style={s.container}>
             <View style={s.header}>
@@ -991,25 +1014,21 @@ const HomeScreen = () => {
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item.id}
-                ListHeaderComponent={
-                    <StoryBar
-                        onUserPress={handleUserPress}
-                        onMyProfilePress={() => router.push('/(tabs)/screens/ProfileScreen')}
-                    />
-                }
                 renderItem={({ item }) => (
                     <PostCard
                         post={item}
+                        commentCount={comments[item.id]?.length ?? 0}
                         onReact={handleReact}
                         onOpenComments={handleOpenComments}
                         onShare={() => setShareVisible(true)}
                         onUserPress={handleUserPress}
-                        commentCount={comments[item.id]?.length ?? 0}
                         onImagePress={handleImagePress}
                     />
                 )}
+                ListHeaderComponent={<ListHeader />}
                 ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-                contentContainerStyle={{ paddingBottom: 80 }}
+                contentContainerStyle={{ paddingBottom: 90 }}
+                showsVerticalScrollIndicator={false}
             />
 
             <TouchableOpacity style={s.fab} onPress={() => router.push('/screens/CreatePostScreen')}>
@@ -1054,10 +1073,7 @@ const s = StyleSheet.create({
         width: 38, height: 38, borderRadius: 19,
         backgroundColor: '#E4E6EB', alignItems: 'center', justifyContent: 'center',
     },
-    storyBar: {
-        backgroundColor: '#fff', paddingVertical: 12,
-        borderBottomWidth: 0.5, borderBottomColor: '#E4E6EB', marginBottom: 8,
-    },
+
     storyItem: { alignItems: 'center', gap: 4, width: 72 },
     storyRing: { width: 64, height: 64, borderRadius: 32, padding: 2, backgroundColor: '#f09433' },
     storyRingGray: { backgroundColor: '#E4E6EB' },
